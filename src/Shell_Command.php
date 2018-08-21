@@ -25,15 +25,16 @@ class Shell_Command extends EE_Command {
 	 */
 	public function __invoke( $args ) {
 		EE\Utils\delem_log( 'ee shell start' );
-		$args = EE\Utils\set_site_arg( $args, 'shell' );
+		$args = EE\SiteUtils\auto_site_name( $args, 'shell', '' );
 		$site_name = EE\Utils\remove_trailing_slash( $args[0] );
-		if ( EE::db()::site_in_db( $site_name ) ) {
-			$db_select = EE::db()::select( ['site_path'], ['sitename' => $site_name]);
-			$site_root    = $db_select[0]['site_path'];
-		} else {
+
+		$site = Site::find( $site_name );
+
+		if ( ! $site ) {
 			EE::error( "Site $site_name does not exist." );
 		}
-		chdir($site_root);
+
+		chdir( $site->site_fs_path );
 		$this->run( "docker-compose exec --user='www-data' php bash" );
 		EE\Utils\delem_log( 'ee shell end' );
 	}
@@ -43,7 +44,7 @@ class Shell_Command extends EE_Command {
 		if ( ! $descriptors ) {
 			$descriptors = array( STDIN, STDOUT, STDERR );
 		}
-		
+
 		$final_cmd = EE\Utils\force_env_on_nix_systems( $cmd );
 		$proc = EE\Utils\proc_open_compat( $final_cmd, $descriptors, $pipes );
 		if ( ! $proc ) {
