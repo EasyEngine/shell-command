@@ -25,7 +25,7 @@ class Shell_Command extends EE_Command {
 	 */
 	public function __invoke( $args ) {
 		EE\Utils\delem_log( 'ee shell start' );
-		$args = EE\SiteUtils\auto_site_name( $args, 'shell', '' );
+		$args      = EE\SiteUtils\auto_site_name( $args, 'shell', '' );
 		$site_name = EE\Utils\remove_trailing_slash( $args[0] );
 
 		$site = Site::find( $site_name );
@@ -46,7 +46,7 @@ class Shell_Command extends EE_Command {
 		}
 
 		$final_cmd = EE\Utils\force_env_on_nix_systems( $cmd );
-		$proc = EE\Utils\proc_open_compat( $final_cmd, $descriptors, $pipes );
+		$proc      = EE\Utils\proc_open_compat( $final_cmd, $descriptors, $pipes );
 		if ( ! $proc ) {
 			exit( 1 );
 		}
