@@ -12,6 +12,7 @@
  */
 
 use EE\Utils;
+use EE\Model\Site;
 
 class Shell_Command extends EE_Command {
 
@@ -28,10 +29,10 @@ class Shell_Command extends EE_Command {
 		$args      = EE\SiteUtils\auto_site_name( $args, 'shell', '' );
 		$site_name = EE\Utils\remove_trailing_slash( $args[0] );
 
-		$site = Site::find( $site_name );
+		$site = Site::find( $site_name, [ 'site_enabled', 'site_fs_path' ] );
 
-		if ( ! $site ) {
-			EE::error( "Site $site_name does not exist." );
+		if ( ! $site || ! $site->site_enabled ) {
+			EE::error( "Site $site_name does not exist or is not enabled." );
 		}
 
 		chdir( $site->site_fs_path );
