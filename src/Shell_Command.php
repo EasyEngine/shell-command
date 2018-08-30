@@ -76,10 +76,11 @@ class Shell_Command extends EE_Command {
 
 		$launch   = EE::launch( 'docker-compose config --services' );
 		$services = explode( PHP_EOL, trim( $launch->stdout ) );
-		if ( ! in_array( $shell_container, $services, true ) ) {
-			EE::debug( 'Site type: ' . $site->site_type );
-			EE::debug( 'Site command: ' . $site->app_sub_type );
-			EE::error( sprintf( '%s site does not have support to launch %s shell.', $site->site_url, $shell_container ) );
+		if ( in_array( $shell_container, $services, true ) ) {
+			return;
 		}
+		EE::debug( 'Site type: ' . $site->site_type );
+		EE::debug( 'Site command: ' . $site->app_sub_type );
+		EE::error( sprintf( '%s site does not have support to launch %s shell.', $site->site_url, $shell_container ) );
 	}
 }
