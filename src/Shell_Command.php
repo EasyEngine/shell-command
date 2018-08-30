@@ -1,5 +1,9 @@
 <?php
 
+use EE\Utils;
+use EE\Model\Site;
+use function EE\Site\Utils\auto_site_name;
+
 /**
  * Brings up a shell to run wp-cli, composer etc.
  *
@@ -10,11 +14,6 @@
  *
  * @package ee-cli
  */
-
-use EE\Utils;
-use EE\Model\Site;
-use function EE\Site\Utils\auto_site_name;
-
 class Shell_Command extends EE_Command {
 
 	/**
@@ -26,6 +25,7 @@ class Shell_Command extends EE_Command {
 	 * : Name of website to run shell on.
 	 */
 	public function __invoke( $args ) {
+
 		EE\Utils\delem_log( 'ee shell start' );
 		$args      = auto_site_name( $args, 'shell', '' );
 		$site_name = EE\Utils\remove_trailing_slash( $args[0] );
@@ -49,6 +49,7 @@ class Shell_Command extends EE_Command {
 	 * @param null|array $descriptors File descriptors for proc.
 	 */
 	private function run( $cmd, $descriptors = null ) {
+
 		EE\Utils\check_proc_available( 'ee_shell' );
 		if ( ! $descriptors ) {
 			$descriptors = array( STDIN, STDOUT, STDERR );
@@ -81,5 +82,4 @@ class Shell_Command extends EE_Command {
 			EE::error( sprintf( '%s site does not have support to launch %s shell.', $shell_container, $site->site_url ) );
 		}
 	}
-
 }
