@@ -79,7 +79,7 @@ class Shell_Command extends EE_Command {
 		if ( ! in_array( $shell_container, $services, true ) ) {
 			EE::debug( 'Site type: ' . $site->site_type );
 			EE::debug( 'Site command: ' . $site->app_sub_type );
-			EE::error( sprintf( '%s site does not have support to launch %s shell.', $shell_container, $site->site_url ) );
+			EE::error( sprintf( '%s site does not have support to launch %s shell.', $site->site_url, $shell_container ) );
 		}
 	}
 }
