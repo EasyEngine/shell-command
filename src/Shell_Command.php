@@ -13,6 +13,7 @@
 
 use EE\Utils;
 use EE\Model\Site;
+use function EE\Site\Utils\auto_site_name;
 
 class Shell_Command extends EE_Command {
 
@@ -26,7 +27,7 @@ class Shell_Command extends EE_Command {
 	 */
 	public function __invoke( $args ) {
 		EE\Utils\delem_log( 'ee shell start' );
-		$args      = EE\SiteUtils\auto_site_name( $args, 'shell', '' );
+		$args      = auto_site_name( $args, 'shell', '' );
 		$site_name = EE\Utils\remove_trailing_slash( $args[0] );
 
 		$site = Site::find( $site_name, [ 'site_enabled', 'site_fs_path' ] );
@@ -40,6 +41,12 @@ class Shell_Command extends EE_Command {
 		EE\Utils\delem_log( 'ee shell end' );
 	}
 
+	/**
+	 * Run the command to open shell.
+	 *
+	 * @param string $cmd             Command to be executed to open shell.
+	 * @param null|array $descriptors File descriptors for proc.
+	 */
 	private function run( $cmd, $descriptors = null ) {
 		EE\Utils\check_proc_available( 'ee_shell' );
 		if ( ! $descriptors ) {
