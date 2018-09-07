@@ -1,6 +1,5 @@
 <?php
 
-use EE\Utils;
 use EE\Model\Site;
 use function EE\Site\Utils\auto_site_name;
 
@@ -23,6 +22,12 @@ class Shell_Command extends EE_Command {
 	 *
 	 * [<site-name>]
 	 * : Name of website to run shell on.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Open shell for site
+	 *     $ ee shell example.com
+	 *
 	 */
 	public function __invoke( $args ) {
 
@@ -45,7 +50,7 @@ class Shell_Command extends EE_Command {
 	/**
 	 * Run the command to open shell.
 	 *
-	 * @param string $cmd             Command to be executed to open shell.
+	 * @param string     $cmd         Command to be executed to open shell.
 	 * @param null|array $descriptors File descriptors for proc.
 	 */
 	private function run( $cmd, $descriptors = null ) {
@@ -69,8 +74,10 @@ class Shell_Command extends EE_Command {
 	/**
 	 * Function to check if container supporting shell is present in docker-compose.yml or not.
 	 *
-	 * @param string $shell_container Container to be checked.
-	 * @param Object $site            Contains relevant site info.
+	 * @param string        $shell_container Container to be checked.
+	 * @param EE\Model\Site $site            Contains relevant site info.
+	 *
+	 * @throws \EE\ExitException
 	 */
 	private function check_shell_available( $shell_container, $site ) {
 
