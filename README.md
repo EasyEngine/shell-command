@@ -18,6 +18,11 @@ ee shell [<site-name>]
 	[<site-name>]
 		Name of website to run shell on.
 
+**EXAMPLES**
+
+    # Open shell for site
+    $ ee shell example.com
+
 ## Contributing
 
 We appreciate you taking the initiative to contribute to this project.
