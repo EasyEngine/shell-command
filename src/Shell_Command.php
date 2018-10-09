@@ -40,6 +40,15 @@ class Shell_Command extends EE_Command {
 	 *     # Open shell for site
 	 *     $ ee shell example.com
 	 *
+	 *     # Open shell with root user
+	 *     $ ee shell example.com --user=root
+	 *
+	 *     # Open shell for some other service
+	 *     $ ee shell example.com --service=nginx
+	 *
+	 *     # Run command non-interactively
+	 *     $ ee shell example.com --service=nginx --command='nginx -t && nginx -s reload'
+	 *
 	 */
 	public function __invoke( $args, $assoc_args ) {
 
