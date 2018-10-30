@@ -1,6 +1,5 @@
 <?php
 
-use EE\Utils;
 use EE\Model\Site;
 use function EE\Site\Utils\auto_site_name;
 
@@ -23,8 +22,35 @@ class Shell_Command extends EE_Command {
 	 *
 	 * [<site-name>]
 	 * : Name of website to run shell on.
+	 *
+	 * [--user=<user>]
+	 * : Set the user to exec into shell.
+	 *
+	 * [--service=<service>]
+	 * : Set the service whose shell you want.
+	 * ---
+	 * default: php
+	 * ---
+	 *
+	 * [--command=<command>]
+	 * : Command to non-interactively run in the shell.
+	 *
+	 *  ## EXAMPLES
+	 *
+	 *     # Open shell for site
+	 *     $ ee shell example.com
+	 *
+	 *     # Open shell with root user
+	 *     $ ee shell example.com --user=root
+	 *
+	 *     # Open shell for some other service
+	 *     $ ee shell example.com --service=nginx
+	 *
+	 *     # Run command non-interactively
+	 *     $ ee shell example.com --service=nginx --command='nginx -t && nginx -s reload'
+	 *
 	 */
-	public function __invoke( $args ) {
+	public function __invoke( $args, $assoc_args ) {
 
 		EE\Utils\delem_log( 'ee shell start' );
 		$args      = auto_site_name( $args, 'shell', '' );
@@ -37,8 +63,23 @@ class Shell_Command extends EE_Command {
 		}
 
 		chdir( $site->site_fs_path );
-		$this->check_shell_available( 'php', $site );
-		$this->run( "docker-compose exec --user='www-data' php bash" );
+
+		$service = \EE\Utils\get_flag_value( $assoc_args, 'service' );
+		$this->check_shell_available( $service, $site );
+
+		$user        = \EE\Utils\get_flag_value( $assoc_args, 'user' );
+		$user_string = '';
+		if ( $user ) {
+			$user_string = $this->check_user_available( $user, $service ) ? "--user='$user'" : '';
+		}
+
+		$shell   = ( 'mailhog' === $service ) ? 'sh' : 'bash';
+		$command = \EE\Utils\get_flag_value( $assoc_args, 'command' );
+		if ( $command ) {
+			EE::exec( "docker-compose exec $user_string $service $shell -c \"$command\"", true, true );
+		} else {
+			$this->run( "docker-compose exec $user_string $service $shell" );
+		}
 		EE\Utils\delem_log( 'ee shell end' );
 	}
 
@@ -70,7 +111,9 @@ class Shell_Command extends EE_Command {
 	 * Function to check if container supporting shell is present in docker-compose.yml or not.
 	 *
 	 * @param string $shell_container Container to be checked.
-	 * @param Object $site            Contains relevant site info.
+	 * @param EE\Model\Site $site     Contains relevant site info.
+	 *
+	 * @throws \EE\ExitException
 	 */
 	private function check_shell_available( $shell_container, $site ) {
 
@@ -82,5 +125,24 @@ class Shell_Command extends EE_Command {
 		EE::debug( 'Site type: ' . $site->site_type );
 		EE::debug( 'Site command: ' . $site->app_sub_type );
 		EE::error( sprintf( '%s site does not have support to launch %s shell.', $site->site_url, $shell_container ) );
+	}
+
+	/**
+	 * Function to check if a user is present or not in the given container.
+	 *
+	 * @param string $user            User to be checked in the shell.
+	 * @param string $shell_container Container in which the user is to be checked.
+	 *
+	 * @return bool Success.
+	 */
+	private function check_user_available( $user, $shell_container ) {
+		$check_command = sprintf( "docker-compose exec --user='%s' %s bash -c 'exit'", $user, $shell_container );
+
+		if ( EE::exec( $check_command ) ) {
+			return true;
+		}
+		EE::warning( "$user is not available in $shell_container, falling back to default user." );
+
+		return false;
 	}
 }
