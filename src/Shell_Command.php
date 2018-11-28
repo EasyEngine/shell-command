@@ -1,7 +1,8 @@
 <?php
 
 use EE\Model\Site;
-use function EE\Site\Utils\auto_site_name;
+use EE\Site\Utils as Site_Utils;
+use EE\Utils as EE_Utils;
 
 /**
  * Brings up a shell to run wp-cli, composer etc.
@@ -52,9 +53,9 @@ class Shell_Command extends EE_Command {
 	 */
 	public function __invoke( $args, $assoc_args ) {
 
-		EE\Utils\delem_log( 'ee shell start' );
-		$args      = auto_site_name( $args, 'shell', '' );
-		$site_name = EE\Utils\remove_trailing_slash( $args[0] );
+		EE_Utils\delem_log( 'ee shell start' );
+		$args      = Site_Utils\auto_site_name( $args, 'shell', '' );
+		$site_name = EE_Utils\remove_trailing_slash( $args[0] );
 
 		$site = Site::find( $site_name );
 
@@ -64,23 +65,23 @@ class Shell_Command extends EE_Command {
 
 		chdir( $site->site_fs_path );
 
-		$service = \EE\Utils\get_flag_value( $assoc_args, 'service' );
+		$service = EE_Utils\get_flag_value( $assoc_args, 'service' );
 		$this->check_shell_available( $service, $site );
 
-		$user        = \EE\Utils\get_flag_value( $assoc_args, 'user' );
+		$user        = EE_Utils\get_flag_value( $assoc_args, 'user' );
 		$user_string = '';
 		if ( $user ) {
 			$user_string = $this->check_user_available( $user, $service ) ? "--user='$user'" : '';
 		}
 
 		$shell   = ( 'mailhog' === $service ) ? 'sh' : 'bash';
-		$command = \EE\Utils\get_flag_value( $assoc_args, 'command' );
+		$command = EE_Utils\get_flag_value( $assoc_args, 'command' );
 		if ( $command ) {
 			EE::exec( "docker-compose exec $user_string $service $shell -c \"$command\"", true, true );
 		} else {
 			$this->run( "docker-compose exec $user_string $service $shell" );
 		}
-		EE\Utils\delem_log( 'ee shell end' );
+		EE_Utils\delem_log( 'ee shell end' );
 	}
 
 	/**
@@ -91,13 +92,13 @@ class Shell_Command extends EE_Command {
 	 */
 	private function run( $cmd, $descriptors = null ) {
 
-		EE\Utils\check_proc_available( 'ee_shell' );
+		EE_Utils\check_proc_available( 'ee_shell' );
 		if ( ! $descriptors ) {
 			$descriptors = array( STDIN, STDOUT, STDERR );
 		}
 
-		$final_cmd = EE\Utils\force_env_on_nix_systems( $cmd );
-		$proc      = EE\Utils\proc_open_compat( $final_cmd, $descriptors, $pipes );
+		$final_cmd = EE_Utils\force_env_on_nix_systems( $cmd );
+		$proc      = EE_Utils\proc_open_compat( $final_cmd, $descriptors, $pipes );
 		if ( ! $proc ) {
 			exit( 1 );
 		}
