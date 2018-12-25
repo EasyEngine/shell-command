@@ -2,6 +2,7 @@
 
 use EE\Model\Site;
 use function EE\Site\Utils\auto_site_name;
+use function EE\Utils\get_flag_value;
 
 /**
  * Brings up a shell to run wp-cli, composer etc.
@@ -79,10 +80,7 @@ class Shell_Command extends EE_Command {
 		$shell   = ( 'mailhog' === $service ) ? 'sh' : 'bash';
 		$command = \EE\Utils\get_flag_value( $assoc_args, 'command' );
 
-		$tty = '';
-		if ( \EE\Utils\get_flag_value( $assoc_args, 'skip-tty' ) ) {
-			$tty = '-T';
-		}
+		$tty = get_flag_value( $assoc_args, 'skip-tty' ) ? '-T' : '';
 
 		if ( $command ) {
 			EE::exec( "docker-compose exec $tty $user_string $service $shell -c \"$command\"", true, true );
