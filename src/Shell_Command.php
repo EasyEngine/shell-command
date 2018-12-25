@@ -35,6 +35,9 @@ class Shell_Command extends EE_Command {
 	 * [--command=<command>]
 	 * : Command to non-interactively run in the shell.
 	 *
+	 * [--skip-tty]
+	 * : Skips tty allocation.
+	 *
 	 *  ## EXAMPLES
 	 *
 	 *     # Open shell for site
@@ -75,8 +78,14 @@ class Shell_Command extends EE_Command {
 
 		$shell   = ( 'mailhog' === $service ) ? 'sh' : 'bash';
 		$command = \EE\Utils\get_flag_value( $assoc_args, 'command' );
+
+		$tty = '';
+		if ( \EE\Utils\get_flag_value( $assoc_args, 'skip-tty' ) ) {
+			$tty = '-T';
+		}
+
 		if ( $command ) {
-			EE::exec( "docker-compose exec -T $user_string $service $shell -c \"$command\"", true, true );
+			EE::exec( "docker-compose exec $tty $user_string $service $shell -c \"$command\"", true, true );
 		} else {
 			$this->run( "docker-compose exec $user_string $service $shell" );
 		}
