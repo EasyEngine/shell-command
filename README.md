@@ -10,7 +10,7 @@ Quick links: [Using](#using) | [Contributing](#contributing) | [Support](#suppor
 ## Using
 
 ~~~
-ee shell [<site-name>]
+ee shell [<site-name>] [--user=<user>] [--service=<service>] [--command=<command>] [--skip-tty]
 ~~~
 
 **OPTIONS**
@@ -18,17 +18,40 @@ ee shell [<site-name>]
 	[<site-name>]
 		Name of website to run shell on.
 
-**EXAMPLES**
+	[--user=<user>]
+		Set the user to exec into shell.
+
+	[--service=<service>]
+		Set the service whose shell you want.
+		---
+		default: php
+		---
+
+	[--command=<command>]
+		Command to non-interactively run in the shell.
+
+	[--skip-tty]
+		Skips tty allocation.
+
+ **EXAMPLES**
 
     # Open shell for site
     $ ee shell example.com
+
+    # Open shell with root user
+    $ ee shell example.com --user=root
+
+    # Open shell for some other service
+    $ ee shell example.com --service=nginx
+
+    # Run command non-interactively
+    $ ee shell example.com --service=nginx --command='nginx -t && nginx -s reload'
 
 ## Contributing
 
 We appreciate you taking the initiative to contribute to this project.
 
 Contributing isn’t limited to just code. We encourage you to contribute in the way that best fits your abilities, by writing tutorials, giving a demo at your local meetup, helping other users with their support questions, or revising our documentation.
-
 
 ### Reporting a bug
 
