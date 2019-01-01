@@ -1,6 +1,7 @@
 <?php
 
 use EE\Model\Site;
+use EE\Model\Option;
 use function EE\Site\Utils\auto_site_name;
 use function EE\Utils\get_flag_value;
 
@@ -74,6 +75,14 @@ class Shell_Command extends EE_Command {
 
 			$this->check_shell_available( $service, $site );
 		} else {
+			if ( 'global-db' === $service ) {
+				$fs              = new \Symfony\Component\Filesystem\Filesystem();
+				$credential_file = EE_SERVICE_DIR . '/mariadb/conf/conf.d/my.cnf';
+				if ( ! $fs->exists( $credential_file ) ) {
+					$my_cnf = EE\Utils\mustache_render( SHELL_TEMPLATE_ROOT . '/conf.d/my.cnf.mustache', [ 'db_password' => Option::get( GLOBAL_DB ) ] );
+					file_put_contents( $credential_file, $my_cnf );
+				}
+			}
 			chdir( EE_SERVICE_DIR );
 		}
 

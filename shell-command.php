@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'SHELL_TEMPLATE_ROOT' ) ) {
+	define( 'SHELL_TEMPLATE_ROOT', __DIR__ . '/templates' );
+}
+
 if ( ! class_exists( 'EE' ) ) {
 	return;
 }
