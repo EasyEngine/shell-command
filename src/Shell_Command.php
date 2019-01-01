@@ -71,6 +71,17 @@ class Shell_Command extends EE_Command {
 
 			$this->check_shell_available( $service, $site );
 		} else {
+
+			/**
+			 * Check container status for service.
+			 */
+			if ( 'running' !== EE_DOCKER::container_status( sprintf( 'services_%s_1', $service ) ) ) {
+				EE::error( sprintf( '%s service container is not running.', $service ) );
+			}
+
+			/**
+			 * Add my.cnf for mysql autologin.
+			 */
 			if ( 'global-db' === $service ) {
 				$fs              = new Filesystem();
 				$credential_file = EE_SERVICE_DIR . '/mariadb/conf/conf.d/my.cnf';
