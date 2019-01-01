@@ -1,9 +1,10 @@
 <?php
 
-use EE\Model\Site;
 use EE\Model\Option;
+use Symfony\Component\Filesystem\Filesystem;
 use function EE\Site\Utils\auto_site_name;
 use function EE\Utils\get_flag_value;
+use function EE\Site\Utils\get_site_info;
 
 /**
  * Brings up a shell to run wp-cli, composer etc.
@@ -59,41 +60,36 @@ class Shell_Command extends EE_Command {
 
 		EE\Utils\delem_log( 'ee shell start' );
 		$global_services = [ 'global-nginx-proxy', 'global-db', 'global-redis' ];
-		$service         = \EE\Utils\get_flag_value( $assoc_args, 'service' );
+		$service         = get_flag_value( $assoc_args, 'service' );
 
 		if ( ! in_array( $service, $global_services, true ) ) {
 			$args      = auto_site_name( $args, 'shell', '' );
-			$site_name = EE\Utils\remove_trailing_slash( $args[0] );
 
-			$site = Site::find( $site_name );
-
-			if ( ! $site || ! $site->site_enabled ) {
-				EE::error( "Site $site_name does not exist or is not enabled." );
-			}
+			$site = get_site_info( $args, true, true, false );
 
 			chdir( $site->site_fs_path );
 
 			$this->check_shell_available( $service, $site );
 		} else {
 			if ( 'global-db' === $service ) {
-				$fs              = new \Symfony\Component\Filesystem\Filesystem();
+				$fs              = new Filesystem();
 				$credential_file = EE_SERVICE_DIR . '/mariadb/conf/conf.d/my.cnf';
 				if ( ! $fs->exists( $credential_file ) ) {
 					$my_cnf = EE\Utils\mustache_render( SHELL_TEMPLATE_ROOT . '/conf.d/my.cnf.mustache', [ 'db_password' => Option::get( GLOBAL_DB ) ] );
-					file_put_contents( $credential_file, $my_cnf );
+					$fs->dumpFile( $credential_file, $my_cnf );
 				}
 			}
 			chdir( EE_SERVICE_DIR );
 		}
 
-		$user        = \EE\Utils\get_flag_value( $assoc_args, 'user' );
+		$user        = get_flag_value( $assoc_args, 'user' );
 		$user_string = '';
 		if ( $user ) {
 			$user_string = $this->check_user_available( $user, $service ) ? "--user='$user'" : '';
 		}
 
 		$shell   = ( 'mailhog' === $service ) ? 'sh' : 'bash';
-		$command = \EE\Utils\get_flag_value( $assoc_args, 'command' );
+		$command = get_flag_value( $assoc_args, 'command' );
 
 		$tty = get_flag_value( $assoc_args, 'skip-tty' ) ? '-T' : '';
 
