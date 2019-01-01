@@ -57,19 +57,25 @@ class Shell_Command extends EE_Command {
 	public function __invoke( $args, $assoc_args ) {
 
 		EE\Utils\delem_log( 'ee shell start' );
-		$args      = auto_site_name( $args, 'shell', '' );
-		$site_name = EE\Utils\remove_trailing_slash( $args[0] );
+		$global_services = [ 'global-nginx-proxy', 'global-db', 'global-redis' ];
+		$service         = \EE\Utils\get_flag_value( $assoc_args, 'service' );
 
-		$site = Site::find( $site_name );
+		if ( ! in_array( $service, $global_services, true ) ) {
+			$args      = auto_site_name( $args, 'shell', '' );
+			$site_name = EE\Utils\remove_trailing_slash( $args[0] );
 
-		if ( ! $site || ! $site->site_enabled ) {
-			EE::error( "Site $site_name does not exist or is not enabled." );
+			$site = Site::find( $site_name );
+
+			if ( ! $site || ! $site->site_enabled ) {
+				EE::error( "Site $site_name does not exist or is not enabled." );
+			}
+
+			chdir( $site->site_fs_path );
+
+			$this->check_shell_available( $service, $site );
+		} else {
+			chdir( EE_SERVICE_DIR );
 		}
-
-		chdir( $site->site_fs_path );
-
-		$service = \EE\Utils\get_flag_value( $assoc_args, 'service' );
-		$this->check_shell_available( $service, $site );
 
 		$user        = \EE\Utils\get_flag_value( $assoc_args, 'user' );
 		$user_string = '';
