@@ -1,8 +1,10 @@
 <?php
 
-use EE\Model\Site;
+use EE\Model\Option;
+use Symfony\Component\Filesystem\Filesystem;
 use function EE\Site\Utils\auto_site_name;
 use function EE\Utils\get_flag_value;
+use function EE\Site\Utils\get_site_info;
 
 /**
  * Brings up a shell to run wp-cli, composer etc.
@@ -57,33 +59,53 @@ class Shell_Command extends EE_Command {
 	public function __invoke( $args, $assoc_args ) {
 
 		EE\Utils\delem_log( 'ee shell start' );
-		$args      = auto_site_name( $args, 'shell', '' );
-		$site_name = EE\Utils\remove_trailing_slash( $args[0] );
+		$global_services = [ 'global-nginx-proxy', 'global-db', 'global-redis' ];
+		$service         = get_flag_value( $assoc_args, 'service' );
 
-		$site = Site::find( $site_name );
+		if ( ! in_array( $service, $global_services, true ) ) {
+			$args      = auto_site_name( $args, 'shell', '' );
 
-		if ( ! $site || ! $site->site_enabled ) {
-			EE::error( "Site $site_name does not exist or is not enabled." );
+			$site = get_site_info( $args, true, true, false );
+
+			chdir( $site->site_fs_path );
+
+			$this->check_shell_available( $service, $site );
+		} else {
+
+			/**
+			 * Check container status for service.
+			 */
+			if ( 'running' !== EE_DOCKER::container_status( sprintf( 'services_%s_1', $service ) ) ) {
+				EE::error( sprintf( '%s service container is not running.', $service ) );
+			}
+
+			/**
+			 * Add my.cnf for mysql autologin.
+			 */
+			if ( 'global-db' === $service ) {
+				$fs              = new Filesystem();
+				$credential_file = EE_SERVICE_DIR . '/mariadb/conf/conf.d/my.cnf';
+				if ( ! $fs->exists( $credential_file ) ) {
+					$my_cnf = EE\Utils\mustache_render( SHELL_TEMPLATE_ROOT . '/conf.d/my.cnf.mustache', [ 'db_password' => Option::get( GLOBAL_DB ) ] );
+					$fs->dumpFile( $credential_file, $my_cnf );
+				}
+			}
+			chdir( EE_SERVICE_DIR );
 		}
 
-		chdir( $site->site_fs_path );
-
-		$service = \EE\Utils\get_flag_value( $assoc_args, 'service' );
-		$this->check_shell_available( $service, $site );
-
-		$user        = \EE\Utils\get_flag_value( $assoc_args, 'user' );
+		$user        = get_flag_value( $assoc_args, 'user' );
 		$user_string = '';
 		if ( $user ) {
 			$user_string = $this->check_user_available( $user, $service ) ? "--user='$user'" : '';
 		}
 
 		$shell   = ( 'mailhog' === $service ) ? 'sh' : 'bash';
-		$command = \EE\Utils\get_flag_value( $assoc_args, 'command' );
+		$command = get_flag_value( $assoc_args, 'command' );
 
 		$tty = get_flag_value( $assoc_args, 'skip-tty' ) ? '-T' : '';
 
 		if ( $command ) {
-			EE::exec( "docker-compose exec $tty $user_string $service $shell -c \"$command\"", true, true );
+			EE::exec( "docker-compose exec $tty $user_string $service $shell -c \"$command\"", true, true, [], true );
 		} else {
 			$this->run( "docker-compose exec $user_string $service $shell" );
 		}
