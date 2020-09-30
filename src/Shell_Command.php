@@ -3,6 +3,7 @@
 use EE\Model\Option;
 use Symfony\Component\Filesystem\Filesystem;
 use function EE\Site\Utils\auto_site_name;
+use function EE\Utils\docker_compose_with_custom;
 use function EE\Utils\get_flag_value;
 use function EE\Site\Utils\get_site_info;
 
@@ -105,9 +106,9 @@ class Shell_Command extends EE_Command {
 		$tty = get_flag_value( $assoc_args, 'skip-tty' ) ? '-T' : '';
 
 		if ( $command ) {
-			EE::exec( "docker-compose exec $tty $user_string $service $shell -c \"$command\"", true, true, [], true );
+			EE::exec( docker_compose_with_custom() . " exec $tty $user_string $service $shell -c \"$command\"", true, true, [], true );
 		} else {
-			$this->run( "docker-compose exec $user_string $service $shell" );
+			$this->run( docker_compose_with_custom() . " exec $user_string $service $shell" );
 		}
 		EE\Utils\delem_log( 'ee shell end' );
 	}
@@ -146,7 +147,7 @@ class Shell_Command extends EE_Command {
 	 */
 	private function check_shell_available( $shell_container, $site ) {
 
-		$launch   = EE::launch( 'docker-compose config --services' );
+		$launch   = EE::launch( docker_compose_with_custom() . ' config --services' );
 		$services = explode( PHP_EOL, trim( $launch->stdout ) );
 		if ( in_array( $shell_container, $services, true ) ) {
 			return;
@@ -165,7 +166,7 @@ class Shell_Command extends EE_Command {
 	 * @return bool Success.
 	 */
 	private function check_user_available( $user, $shell_container ) {
-		$check_command = sprintf( "docker-compose exec --user='%s' %s bash -c 'exit'", $user, $shell_container );
+		$check_command = sprintf( docker_compose_with_custom() . " exec --user='%s' %s bash -c 'exit'", $user, $shell_container );
 
 		if ( EE::exec( $check_command ) ) {
 			return true;
