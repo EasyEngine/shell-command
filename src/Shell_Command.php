@@ -99,7 +99,7 @@ class Shell_Command extends EE_Command {
 		$command = get_flag_value( $assoc_args, 'command' );
 
 		if ( $command ) {
-			\EE_DOCKER::docker_compose_exec( $command, $service, $shell, $user, '', true );
+			\EE_DOCKER::docker_compose_exec( $command, $service, $shell, $user, '', true, false, [], true, true );
 		} else {
 			$this->run( \EE_DOCKER::docker_compose_with_custom() . " exec $user $service $shell" );
 		}
