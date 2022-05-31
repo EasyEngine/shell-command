@@ -38,9 +38,6 @@ class Shell_Command extends EE_Command {
 	 * [--command=<command>]
 	 * : Command to non-interactively run in the shell.
 	 *
-	 * [--skip-tty]
-	 * : Skips tty allocation.
-	 *
 	 *  ## EXAMPLES
 	 *
 	 *     # Open shell for site
@@ -63,7 +60,7 @@ class Shell_Command extends EE_Command {
 		$service         = get_flag_value( $assoc_args, 'service' );
 
 		if ( ! in_array( $service, $global_services, true ) ) {
-			$args      = auto_site_name( $args, 'shell', '' );
+			$args = auto_site_name( $args, 'shell', '' );
 
 			$site = get_site_info( $args, true, true, false );
 
@@ -93,21 +90,18 @@ class Shell_Command extends EE_Command {
 			chdir( EE_SERVICE_DIR );
 		}
 
-		$user        = get_flag_value( $assoc_args, 'user' );
-		$user_string = '';
-		if ( $user ) {
-			$user_string = $this->check_user_available( $user, $service ) ? "--user='$user'" : '';
+		$user = get_flag_value( $assoc_args, 'user' );
+		if ( ! empty( $user ) ) {
+			$user = $this->check_user_available( $user, $service ) ? "--user=$user" : '';
 		}
 
 		$shell   = ( 'mailhog' === $service ) ? 'sh' : 'bash';
 		$command = get_flag_value( $assoc_args, 'command' );
 
-		$tty = get_flag_value( $assoc_args, 'skip-tty' ) ? '-T' : '';
-
 		if ( $command ) {
-			EE::exec( \EE_DOCKER::docker_compose_with_custom() . " exec $tty $user_string $service $shell -c \"$command\"", true, true, [], true );
+			\EE_DOCKER::docker_compose_exec( $command, $service, $shell, $user, '', true, false, [], true, true );
 		} else {
-			$this->run( \EE_DOCKER::docker_compose_with_custom() . " exec $user_string $service $shell" );
+			$this->run( \EE_DOCKER::docker_compose_with_custom() . " exec $user $service $shell" );
 		}
 		EE\Utils\delem_log( 'ee shell end' );
 	}
@@ -165,9 +159,10 @@ class Shell_Command extends EE_Command {
 	 * @return bool Success.
 	 */
 	private function check_user_available( $user, $shell_container ) {
-		$check_command = sprintf( \EE_DOCKER::docker_compose_with_custom() . " exec --user='%s' %s bash -c 'exit'", $user, $shell_container );
 
-		if ( EE::exec( $check_command ) ) {
+		$check_command = \EE_DOCKER::docker_compose_exec( 'exit', $shell_container, 'sh', $user, '', true, false );
+
+		if ( $check_command ) {
 			return true;
 		}
 		EE::warning( "$user is not available in $shell_container, falling back to default user." );
