@@ -66,6 +66,8 @@ class Shell_Command extends EE_Command {
 
 			chdir( $site->site_fs_path );
 
+			$service = ( 'php' === $service && 'html' === $site->site_type ) ? 'nginx' : $service;
+
 			$this->check_shell_available( $service, $site );
 		} else {
 
